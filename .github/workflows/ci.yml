@@ -45,6 +45,8 @@ jobs:
         run: npm run lint
       - name: Unit and API tests
         run: npm test
+      - name: PR-review bot tests
+        run: node --test .github/scripts/*.test.js
       - name: Production build
         run: npm run build
       - name: Dependency audit (production dependencies, high and above)

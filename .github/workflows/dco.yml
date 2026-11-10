@@ -1,0 +1,49 @@
+# Developer Certificate of Origin (https://developercertificate.org).
+# Every commit in a pull request must carry a "Signed-off-by: Name <email>" line, added with
+# `git commit -s`. Dependabot's commits are exempt: a bot cannot certify the DCO, and its
+# updates are reviewed by a maintainer. See CONTRIBUTING.md, "Licensing of contributions".
+#
+# It runs on PRs into `staging` only, because every contribution enters there. Release PRs
+# from `staging` to `main` contain only commits that already passed this check (plus history
+# from before the DCO was adopted on 9 November 2026), so checking them again adds nothing.
+name: DCO
+
+on:
+  pull_request:
+    branches: [staging]
+
+permissions:
+  contents: read
+
+jobs:
+  dco:
+    name: DCO sign-off
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check every commit is signed off
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          missing=0
+          for c in $(git rev-list --no-merges "$BASE..$HEAD"); do
+            if git log -1 --format=%B "$c" | grep -qE '^Signed-off-by: .+ <[^>]+@[^>]+>$'; then
+              echo "ok      $(git log -1 --format='%h %s' "$c")"
+            else
+              echo "::error::Commit $(git log -1 --format='%h' "$c") (\"$(git log -1 --format='%s' "$c")\") has no Signed-off-by line."
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo
+            echo "Sign off your commits to certify the Developer Certificate of Origin:"
+            echo "  one commit:     git commit --amend -s --no-edit"
+            echo "  several commits: git rebase --signoff origin/staging"
+            echo "then push again with: git push --force-with-lease"
+            exit 1
+          fi

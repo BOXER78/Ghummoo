@@ -49,7 +49,7 @@ Until the database is connected (and, with the embedded database, seeded), every
 { "success": false, "code": "DB_UNAVAILABLE", "message": "The server is starting up. Please try again in a few seconds." }
 ```
 
-If the connection failed, the message is `The server can't reach its database. <reason>`. This response is sent before the router, so it is not affected by the production message rewrite.
+If the connection failed, the message is `The server can't reach its database. <reason>`. In production (`NODE_ENV=production`) the reason is left out, so host names and driver errors are not exposed, and the message is `The server can't reach its database right now. Please try again shortly.`; the reason is in the server logs. This response is sent before the router, so it is not affected by the production message rewrite.
 
 ### List filters on operator and admin endpoints
 
@@ -196,7 +196,7 @@ There is no payment gateway. Bookings are requests that an organiser confirms or
 Anonymous. Not blocked by the database-readiness gate.
 
 - **200** when the database is ready (or no readiness state is attached, as in tests): `{ success: true, data: { status: "ok", database: "ready" } }`.
-- **503** otherwise: `{ success: false, data: { status, database } }`, where `status` is the startup state (`starting`, `seeding` or `error`, set in `server/src/index.js`) and `database` is the error reason or `connecting`.
+- **503** otherwise: `{ success: false, data: { status, database } }`, where `status` is the startup state (`starting`, `seeding` or `error`, set in `server/src/index.js`) and `database` is `connecting` or the error reason. In production the error reason is replaced with `unavailable`.
 
 ## Auth (`/api/auth`)
 

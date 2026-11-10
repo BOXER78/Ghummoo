@@ -5,6 +5,7 @@ const { verifyToken, optionalAuth } = require('../middleware/auth');
 const { isVerified } = require('../services/trips');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { badRequest } = require('../utils/http');
+const { isEmail } = require('../utils/text');
 const { rateLimit } = require('../middleware/rateLimit');
 
 // Brute-force protection: failed sign-ins per account and IP, and new accounts per IP.
@@ -45,7 +46,7 @@ router.post('/register', registerLimiter, asyncHandler(async (req, res) => {
   const { name, email, password, phone } = req.body || {};
   const role = req.body.role === 'operator' ? 'operator' : 'traveler';
   if (!name || String(name).trim().length < 2) throw badRequest('Please enter your full name');
-  if (!email || !/^\S+@\S+\.\S+$/.test(email)) throw badRequest('Please enter a valid email address');
+  if (!isEmail(email)) throw badRequest('Please enter a valid email address');
   if (!password || String(password).length < 8) throw badRequest('Password must be at least 8 characters');
   if (await User.exists({ email: String(email).toLowerCase().trim() })) throw badRequest('An account with this email already exists');
   const user = await User.create({ name, email, passwordHash: String(password), role, phone: phone || null });

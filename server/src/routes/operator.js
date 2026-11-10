@@ -9,7 +9,7 @@ const { verifyToken } = require('../middleware/auth');
 const { requireRole, loadOperator } = require('../middleware/roleGuard');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { badRequest, notFoundErr, conflict, forbidden, queryFilter } = require('../utils/http');
-const { uniqueSlug, toList, escapeRegex, csvCell } = require('../utils/text');
+const { uniqueSlug, toList, escapeRegex, csvCell, isEmail } = require('../utils/text');
 const { releaseSeats, adjustConfirmedSeats } = require('../services/seats');
 
 router.use(verifyToken, requireRole('operator'));
@@ -29,7 +29,7 @@ function validateProfile(data, creating) {
   if (creating) {
     if (!data.description || String(data.description).trim().length < 30) throw badRequest('Tell travellers about your business (at least 30 characters)');
     if (!data.contactPhone) throw badRequest('Contact phone is required');
-    if (!data.contactEmail || !/^\S+@\S+\.\S+$/.test(data.contactEmail)) throw badRequest('A valid contact email is required');
+    if (!data.contactEmail || !isEmail(data.contactEmail)) throw badRequest('A valid contact email is required');
     if (!data.location) throw badRequest('Location is required');
   }
   if (data.foundedYear) {

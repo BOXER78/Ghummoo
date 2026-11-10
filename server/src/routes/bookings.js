@@ -3,7 +3,7 @@ const { Booking, TripDeparture, TripPackage, Operator, TripAnnouncement, Review 
 const { verifyToken } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { badRequest, notFoundErr, forbidden, conflict } = require('../utils/http');
-const { bookingReference } = require('../utils/text');
+const { bookingReference, isEmail } = require('../utils/text');
 const { holdSeats, releaseSeats, adjustConfirmedSeats } = require('../services/seats');
 const { isBookable } = require('../services/trips');
 
@@ -19,7 +19,7 @@ function validateTravelers(list, seats) {
     const age = Number(t.age);
     if (fullName.length < 2) throw badRequest(`Traveller ${n}: full name is required`);
     if (!Number.isInteger(age) || age < 1 || age > 110) throw badRequest(`Traveller ${n}: enter a valid age`);
-    if (t.email && !/^\S+@\S+\.\S+$/.test(t.email)) throw badRequest(`Traveller ${n}: email looks invalid`);
+    if (t.email && !isEmail(t.email)) throw badRequest(`Traveller ${n}: email looks invalid`);
     return {
       fullName,
       age,
@@ -37,11 +37,11 @@ router.post('/', asyncHandler(async (req, res) => {
   const { departureId, specialRequests } = req.body || {};
   const contact = req.body?.contact && typeof req.body.contact === 'object' ? req.body.contact : {};
   const seats = Number(req.body.seats);
-  if (!departureId) throw badRequest('Please choose a departure');
+  if (!departureId || typeof departureId !== 'string') throw badRequest('Please choose a departure');
   if (!Number.isInteger(seats) || seats < 1 || seats > MAX_SEATS) throw badRequest(`You can book between 1 and ${MAX_SEATS} seats`);
   const travelers = validateTravelers(req.body.travelers, seats);
   if (!contact.name || !contact.email || !contact.phone) throw badRequest('Contact name, email and phone are required');
-  if (!/^\S+@\S+\.\S+$/.test(contact.email)) throw badRequest('Contact email looks invalid');
+  if (!isEmail(contact.email)) throw badRequest('Contact email looks invalid');
   if (!/^[+\d][\d\s-]{7,16}$/.test(String(contact.phone).trim())) throw badRequest('Contact phone looks invalid');
 
   const departure = await TripDeparture.findById(departureId).lean();

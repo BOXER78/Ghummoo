@@ -2,7 +2,7 @@
 
 Thanks for helping. Ghumo AI is a marketplace for fixed-departure group trips in India, run by independent organisers. This guide explains how to go from "I found an issue" to "my change is merged".
 
-> **Licence.** Ghumo AI is licensed under the [GNU AGPL-3.0](LICENSE). The owners are still deciding how contributors confirm their right to contribute: a DCO sign-off or a CLA (see "Licensing of contributions" below). Until that is settled, maintainers will not merge outside contributions. You are welcome to open issues, discuss them and prepare PRs in the meantime.
+> **Licence and sign-off.** Ghumo AI is licensed under the [GNU AGPL-3.0](LICENSE). Every commit must be signed off under the [Developer Certificate of Origin](https://developercertificate.org): use `git commit -s`. A CI check blocks PRs with unsigned commits. See "Licensing of contributions" below.
 
 ## The ten steps
 
@@ -62,11 +62,24 @@ Use the conventional style already in the history: `feat: …`, `fix: …`, `tes
 
 ## Licensing of contributions
 
-Contributions are accepted under the project's licence, the [GNU AGPL-3.0](LICENSE): you license your contribution to everyone under the same terms as the rest of the code. The owners are still deciding whether contributors also:
-- sign off each commit under the Developer Certificate of Origin (`git commit -s`); or
-- sign a contributor licence agreement.
+Contributions are accepted under the project's licence, the [GNU AGPL-3.0](LICENSE): you license your contribution to everyone under the same terms as the rest of the code. There is no contributor licence agreement.
 
-This file will be updated with the exact requirement before the first outside contribution is merged. Only submit work you wrote yourself or have the right to contribute.
+**Every commit must be signed off** under the [Developer Certificate of Origin 1.1](https://developercertificate.org) (DCO). By adding a sign-off you certify that you wrote the change, or otherwise have the right to submit it, under the project's licence. The sign-off is one line at the end of the commit message, using your real name and an email you can be reached at:
+
+```
+Signed-off-by: Priya Sharma <priya@example.com>
+```
+
+Git adds it for you:
+
+```bash
+git commit -s -m "fix: describe the change"         # new commits
+git commit --amend -s --no-edit                      # sign off the last commit
+git rebase --signoff origin/staging                  # sign off every commit on your branch
+git push --force-with-lease                          # update your PR after amending or rebasing
+```
+
+The **DCO sign-off** check (`.github/workflows/dco.yml`) runs on every pull request and fails if any commit lacks a sign-off. Only submit work you wrote yourself or have the right to contribute.
 
 ## Code review checklist (for reviewers)
 
@@ -78,6 +91,17 @@ This file will be updated with the exact requirement before the first outside co
 - [ ] No unnecessary dependency. Any API contract change is documented.
 - [ ] UI: keyboard, mobile width, reduced motion and colour tokens checked.
 - [ ] CI is green.
+
+## The automated PR check
+
+When you open a PR, a bot comment summarises it within a minute and updates on every push. It checks:
+- the PR targets `staging` and links an issue (`Closes #12`);
+- the template is filled in;
+- tests changed when application code changed;
+- which sensitive files changed (workflows, dependencies, auth, the user model);
+- whether the PR is large.
+
+Problems in the first point fail the **PR checklist** check; the rest are advice for you and the reviewer. The check is advisory, not a merge requirement: it tells you what to fix, and maintainers decide. The bot reads only the PR description and file list and never runs your code.
 
 ## Who reviews
 

@@ -25,11 +25,21 @@ async function uniqueSlug(Model, base, excludeId) {
 // Human-friendly booking reference, e.g. GHM-7K3P9Q (no ambiguous chars).
 function bookingReference() {
   const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-  const bytes = crypto.randomBytes(6);
+  const limit = 256 - (256 % alphabet.length); // reject the top bytes so every symbol is equally likely
   let out = '';
-  for (const b of bytes) out += alphabet[b % alphabet.length];
+  while (out.length < 6) {
+    for (const b of crypto.randomBytes(8)) {
+      if (b < limit && out.length < 6) out += alphabet[b % alphabet.length];
+    }
+  }
   return `GHM-${out}`;
 }
+
+// Email shape check. The length cap (RFC 5321 allows 254) runs before the regex, so a crafted
+// multi-kilobyte string can never reach it. /^\S+@\S+\.\S+$/ alone is polynomial on input like
+// "!@!@!@…": 64,000 characters blocked the event loop for about 2 seconds.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const isEmail = (v) => typeof v === 'string' && v.length <= 254 && EMAIL_RE.test(v);
 
 const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -47,4 +57,4 @@ const csvCell = (v) => {
   return `"${s.replace(/"/g, '""')}"`;
 };
 
-module.exports = { slugify, uniqueSlug, bookingReference, escapeRegex, toList, csvCell };
+module.exports = { slugify, uniqueSlug, bookingReference, escapeRegex, toList, csvCell, isEmail, EMAIL_RE };
