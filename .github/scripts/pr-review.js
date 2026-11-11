@@ -74,7 +74,7 @@ function addedDependencies(patch) {
   return [...names('+')].filter((n) => !before.has(n));
 }
 
-function analyse({ pr, files, repoFullName }) {
+function analyse({ pr, files, commits = [], repoFullName }) {
   const errors = [];
   const warnings = [];
   const notes = [];
@@ -90,7 +90,8 @@ function analyse({ pr, files, repoFullName }) {
   }
 
   // 2. Linked issue (maintainers and release PRs are exempt)
-  const linksIssue = ISSUE_LINK.test(stripComments(pr.body));
+  const linksIssue = [pr.body, pr.title, ...commits.map((c) => c && c.commit && c.commit.message)]
+    .some((text) => ISSUE_LINK.test(stripComments(text)));
   if (!release && !maintainer && !linksIssue) {
     errors.push('No linked issue. Add a line such as **`Closes #12`** to the description. Every contribution should start from an issue (see CONTRIBUTING.md).');
   } else if (!release && maintainer && !linksIssue) {

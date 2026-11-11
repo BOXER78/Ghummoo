@@ -74,6 +74,12 @@ test('issue links: Closes, Fixes, Resolves and full URLs count; a bare mention d
   assert.equal(analyse({ pr: pr({ body: 'related to #4' }), files: [f('README.md')], repoFullName: REPO }).errors.length, 1);
 });
 
+test('a linked issue in a commit message counts', () => {
+  const commits = [{ commit: { message: 'fix: validate phones\n\nCloses #2' } }];
+  const r = analyse({ pr: pr({ body: 'Small fix' }), files: [f('README.md')], commits, repoFullName: REPO });
+  assert.deepEqual(r.errors, []);
+});
+
 test('maintainers do not need a linked issue', () => {
   const r = analyse({ pr: pr({ author_association: 'OWNER', body: 'Docs tweak' }), files: [f('docs/ROADMAP.md')], repoFullName: REPO });
   assert.deepEqual(r.errors, []);
