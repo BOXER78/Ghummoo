@@ -26,6 +26,13 @@ Error:
 - `message` is always present and written for the end user.
 - `code` appears at the top level only on these errors: `DB_UNAVAILABLE` (503), `RATE_LIMITED` (429) and `ONBOARDING_REQUIRED` (409).
 - `details` appears when the route attaches it. Known uses: trip-group access errors (`details.code`, see Groups), AI provider errors (`details.code`, see AI) and publish blockers (`details.blockers`).
+- `requestId` appears in the body of 5xx errors and matches the `X-Request-Id` response header (see the next section).
+
+### Request correlation (X-Request-Id)
+
+Every response — including static `/uploads/*` files and the 503 database-unavailable reply — carries an `X-Request-Id` header. A client-supplied header is echoed only when it is a safe short string (1–64 characters of `A-Za-z0-9._-`); otherwise (or when absent) the server answers with a freshly generated UUID. Users can quote this id so support can find the matching server log entry.
+
+The id is stored as `req.id` in server code. Each request writes exactly one JSON log line: `{ time, level, requestId, method, path, status, durationMs, role }`, where `path` is the route path without its query string and `role` is the authenticated role or `anonymous`. Log lines never contain query strings, request bodies, headers or any other personal data. Static files (`/assets/*`, `/uploads/*`) log at `debug` level, everything else at `info`. Set `LOG_REQUESTS=false` to turn the request lines off — see `server/.env.example`.
 
 ### Error statuses produced by shared middleware
 
@@ -865,7 +872,7 @@ Query: `status`, `q` (reference, contact name or contact email), both plain stri
 
 ### `GET /api/admin/reports`
 
-Query: `status` (plain string). **200** `data: [report + reporter: { name, email }, target]`, newest first. `target` is resolved only for `package` (`title`, `slug`, `status`) and `operator` (`businessName`, `slug`, `status`) reports; it is `null` for `booking` and `message` reports.
+Query: `status` (plain string). **200** `data: [report + reporter: { name, email }, target]`, newest first. `target` is resolved for `package` (`title`, `slug`, `status`), `operator` (`businessName`, `slug`, `status`) and `booking` (`reference`, `status`) reports; it is `null` for `message` reports. Booking target details do not include traveller contact information.
 
 ### `POST /api/admin/reports/:id/resolve`
 
@@ -882,11 +889,11 @@ Signed in, any role. Body:
 | Field | Rule |
 | --- | --- |
 | `targetType` | Required: `package`, `operator` or `booking`. |
-| `targetId` | Required. Must be an ObjectId (model validation, 400 otherwise). The route does not check that the target exists. |
+| `targetId` | Required. Must be a valid ObjectId; the target must exist. A booking can be reported only by its traveller or its organiser. |
 | `reason` | Required: `misleading`, `pricing`, `safety`, `fraud` or `other`. |
 | `details` | Optional, truncated to 2000 characters. |
 
-**201** `data`: the report (`status: "open"`). **400** `Invalid report target`, `Please choose a reason`, or a validation error.
+Five reports per user per minute. **201** `data`: the report (`status: "open"`). **400** `Invalid report target` or `Please choose a reason`. **404** `We couldn't find what you're reporting` for missing targets or bookings the user cannot access. **429** `RATE_LIMITED` when the per-user limit is exceeded.
 
 Group messages are reported through `POST /api/groups/:departureId/messages/:messageId/report` instead.
 
