@@ -24,6 +24,10 @@ Both owners have equal standing. Each can review and merge contributions, triage
 
 When the owners disagree, the change waits until they agree. Nothing owner-level happens by default.
 
+## Completing contributions
+
+Owners finish good-but-incomplete contributions **in the contributor's own PR**, so the contributor keeps the merged PR and the authorship (see CONTRIBUTING.md, "Finishing a contributor's PR"). Applying the `dco-maintainer-signoff` label is an owner's personal certification, under DCO clause (b), of the commits that lack a sign-off. Only an owner applies it, and only after reading the code.
+
 ## Admin access is not a bypass
 
 Both owners are admins. Branch rulesets apply to admins too, unless an admin is on a ruleset's bypass list. The project keeps the bypass list for `main` **empty**, so even admins change `main` only through a reviewed PR. See [docs/BRANCHING_AND_RELEASE_WORKFLOW.md](docs/BRANCHING_AND_RELEASE_WORKFLOW.md).
