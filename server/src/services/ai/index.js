@@ -109,8 +109,10 @@ function datesInText(text) {
     if (day >= 1 && day <= 31 && month >= 1 && month <= 12) found.add(`${day}-${month}`);
   };
 
-  // "20th" and "20" are days; "5D" or "120" glued to letters is not.
-  const tokens = [...s.matchAll(/(\d+)(?:st|nd|rd|th)?(?![a-z\d])|[a-z]+|\d+/gi)].map((m) => {
+  // "20th" and "20" are days; "5D" or "120" glued to letters is not. An amount with thousands
+  // separators ("18,999", "1,25,000") is one word, so its "18" or "1" is never read as a day.
+  // "Dec 5,12,19" still lists days: a separator group of three digits marks an amount.
+  const tokens = [...s.matchAll(/\d{1,3}(?:,\d{2})*,\d{3}(?:\.\d+)?(?!\d)|(\d+)(?:st|nd|rd|th)?(?![a-z\d])|[a-z]+|\d+/gi)].map((m) => {
     if (m[1] !== undefined) return { day: Number(m[1]) };
     const word = m[0].toLowerCase();
     return MONTHS[word] ? { month: MONTHS[word] } : { word };

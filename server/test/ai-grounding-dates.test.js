@@ -66,6 +66,14 @@ test('dateInText: a day only inside a larger number does not ground a date', () 
   assert.equal(dateInText('not-a-date', '20 Dec'), false);
 });
 
+test('dateInText: an amount with thousands separators is not a day', () => {
+  assert.equal(dateInText(`${Y}-12-18`, 'Departure Dec 5: ₹18,999 per person'), false);
+  assert.equal(dateInText(`${Y}-12-12`, 'Only 12 seats, Rs 12,500. Dec 5'), false);
+  assert.equal(dateInText(`${Y}-12-01`, 'Dec 5 – ₹1,25,000 for the group'), false, 'Indian grouping');
+  assert.equal(dateInText(`${Y}-12-05`, 'Departure Dec 5: ₹18,999 per person'), true, 'the real date still grounds');
+  assert.equal(dateInText(`${Y}-12-12`, 'Batches: Dec 5,12,19'), true, 'a list of days without spaces');
+});
+
 test('normalise keeps grounded dates and clears invented ones with a warning', () => {
   const text = 'Manali Kasol 5D/4N, 7999 per person, batches 20th Dec and 27 Dec';
   const out = normalise(raw({ departureDates: [`${Y}-12-20`, `${Y}-12-27`, `${Y}-12-31`] }), text);
